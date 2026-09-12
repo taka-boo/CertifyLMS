@@ -69,7 +69,7 @@ class QaThread extends Model
         };
     }
 
-    /** タイトルと本文のキーワードで検索 */
+    /** タイトル・本文・回答本文のキーワードで検索 */
     public function scopeKeyword(Builder $query, ?string $keyword): Builder
     {
         if ($keyword === null || $keyword === '') {
@@ -78,7 +78,10 @@ class QaThread extends Model
 
         return $query->where(function (Builder $q) use ($keyword) {
             $q->where('title', 'LIKE', '%'.$keyword.'%')
-                ->orWhere('body', 'LIKE', '%'.$keyword.'%');
+                ->orWhere('body', 'LIKE', '%'.$keyword.'%')
+                ->orWhereHas('replies', function (Builder $replyQuery) use ($keyword) {
+                    $replyQuery->where('body', 'LIKE', '%'.$keyword.'%');
+                });
         });
     }
 

@@ -33,7 +33,7 @@ class QaReplyFactory extends Factory
      */
     public function asCoach(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'user_id' => User::factory()->coach(),
         ]);
     }

@@ -191,4 +191,26 @@ class QaThreadControllerTest extends TestCase
 
         $response->assertRedirect(route('login'));
     }
+
+    public function test_index_keyword_search_matches_reply_body(): void
+    {
+        $student = User::factory()->student()->inProgress()->create();
+        $certification = Certification::factory()->published()->create();
+
+        $matchingThread = QaThread::factory()->for($certification)->create([
+            'title' => '関係ないタイトル',
+            'body' => '関係ない本文',
+        ]);
+        QaReply::factory()->for($matchingThread)->create(['body' => '特殊なキーワードが含まれる回答']);
+
+        $nonMatchingThread = QaThread::factory()->for($certification)->create();
+
+        $response = $this->actingAs($student)->get(route('qa-board.index', ['keyword' => '特殊なキーワード']));
+
+        $response->assertOk();
+        $response->assertViewHas('threads', function ($threads) use ($matchingThread, $nonMatchingThread) {
+            return $threads->pluck('id')->contains($matchingThread->id)
+                && ! $threads->pluck('id')->contains($nonMatchingThread->id);
+        });
+    }
 }

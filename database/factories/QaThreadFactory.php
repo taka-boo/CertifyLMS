@@ -34,7 +34,7 @@ class QaThreadFactory extends Factory
 
     public function open(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'status' => QaThreadStatus::Open->value,
             'resolved_at' => null,
         ]);
@@ -42,7 +42,7 @@ class QaThreadFactory extends Factory
 
     public function resolved(): static
     {
-        return $this->state(fn() => [
+        return $this->state(fn () => [
             'status' => QaThreadStatus::Resolved->value,
             'resolved_at' => now(),
         ]);

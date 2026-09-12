@@ -9,6 +9,7 @@ use App\Models\QaReply;
 use App\Models\QaThread;
 use App\Models\User;
 use Illuminate\Foundation\Testing\RefreshDatabase;
+use Illuminate\Support\Str;
 use Tests\TestCase;
 
 /**
@@ -38,8 +39,16 @@ class QaReplyControllerTest extends TestCase
 
     public function test_coach_can_post_reply(): void
     {
+        $admin = User::factory()->admin()->create();
         $coach = User::factory()->coach()->inProgress()->create();
-        $thread = QaThread::factory()->create();
+        $certification = Certification::factory()->published()->create();
+        $thread = QaThread::factory()->for($certification)->create();
+
+        $certification->coaches()->attach($coach->id, [
+            'id' => (string) Str::ulid(),
+            'assigned_by_user_id' => $admin->id,
+            'assigned_at' => now(),
+        ]);
 
         $response = $this->actingAs($coach)->post(route('qa-board.replies.store', $thread), [
             'body' => 'コーチからの回答です。',
@@ -50,6 +59,19 @@ class QaReplyControllerTest extends TestCase
             'qa_thread_id' => $thread->id,
             'user_id' => $coach->id,
         ]);
+    }
+
+    public function test_coach_cannot_post_reply_for_unassigned_certification(): void
+    {
+        $coach = User::factory()->coach()->inProgress()->create();
+        $thread = QaThread::factory()->create();
+
+        $response = $this->actingAs($coach)->postJson(route('qa-board.replies.store', $thread), [
+            'body' => '担当外からの回答です。',
+        ]);
+
+        $response->assertForbidden();
+        $this->assertDatabaseCount('qa_replies', 0);
     }
 
     public function test_admin_cannot_post_reply(): void
