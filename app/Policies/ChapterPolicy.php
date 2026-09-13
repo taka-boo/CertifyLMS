@@ -24,7 +24,8 @@ class ChapterPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定 / 修正後: 担当資格(Part経由でCertificationを参照)であれば許可
+            UserRole::Coach => $this->assignedCoach($auth, $part->certification),
             default => false,
         };
     }
@@ -33,7 +34,8 @@ class ChapterPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定 / 修正後: 担当資格ならDraftも閲覧可
+            UserRole::Coach => $this->assignedCoach($auth, $chapter->part->certification),
             default => $chapter->status === ContentStatus::Published,
         };
     }
@@ -72,7 +74,8 @@ class ChapterPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定（B-B-01の原因箇所） / 修正後: assignedCoach()で判定
+            UserRole::Coach => $this->assignedCoach($auth, $certification),
             default => false,
         };
     }

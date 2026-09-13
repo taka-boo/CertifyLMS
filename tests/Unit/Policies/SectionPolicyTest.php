@@ -71,4 +71,30 @@ class SectionPolicyTest extends TestCase
         $this->assertTrue($policy->update($coach, $section));
         $this->assertTrue($policy->preview($coach, $section));
     }
+
+    // 追加: view()のコーチ分岐（B-B-01修正で新たに判定するようになった箇所）を検証する
+    public function test_coach_can_view_draft_section_of_assigned_certification(): void
+    {
+        $coach = User::factory()->coach()->create();
+        $admin = User::factory()->admin()->create();
+        $assignedCert = Certification::factory()->published()->create();
+        $otherCert = Certification::factory()->published()->create();
+        CertificationCoachAssignment::create([
+            'id' => (string) Str::ulid(),
+            'certification_id' => $assignedCert->id,
+            'user_id' => $coach->id,
+            'assigned_by_user_id' => $admin->id,
+            'assigned_at' => now(),
+        ]);
+        $assignedChapter = Chapter::factory()->for(Part::factory()->for($assignedCert))->create();
+        $assignedDraftSection = Section::factory()->for($assignedChapter)->draft()->create();
+
+        $otherChapter = Chapter::factory()->for(Part::factory()->for($otherCert))->create();
+        $otherDraftSection = Section::factory()->for($otherChapter)->draft()->create();
+
+        $policy = new SectionPolicy;
+
+        $this->assertTrue($policy->view($coach, $assignedDraftSection), '担当資格ならDraftのSectionも閲覧可');
+        $this->assertFalse($policy->view($coach, $otherDraftSection), '担当外資格のSectionは閲覧不可');
+    }
 }

@@ -35,7 +35,9 @@ class SectionQuestionPolicy
         }
 
         if ($auth->role === UserRole::Coach) {
-            return false;
+            // 修正前: false固定
+            // 修正後: 担当資格配下ならDraftの演習問題も確認できるようにする（他Policyと統一）
+            return $this->assignedCoach($auth, $certification);
         }
 
         if ($question->status !== ContentStatus::Published) {
@@ -76,7 +78,9 @@ class SectionQuestionPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定（B-B-01の原因箇所）
+            // 修正後: assignedCoach()で判定。viewAny/create/update/delete/publish/unpublishすべてがこのメソッド経由なので一括で直る
+            UserRole::Coach => $this->assignedCoach($auth, $certification),
             default => false,
         };
     }

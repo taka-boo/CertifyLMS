@@ -23,7 +23,9 @@ class PartPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定でコーチは常に一覧を見られなかった
+            // 修正後: 担当資格(certification_coach_assignments)であれば許可
+            UserRole::Coach => $this->assignedCoach($auth, $certification),
             default => false,
         };
     }
@@ -32,7 +34,9 @@ class PartPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定
+            // 修正後: 担当資格ならDraft状態でも閲覧可（教材管理の性質上、公開前の確認が必要なため）
+            UserRole::Coach => $this->assignedCoach($auth, $part->certification),
             default => $part->status === ContentStatus::Published,
         };
     }
@@ -71,7 +75,9 @@ class PartPolicy
     {
         return match ($auth->role) {
             UserRole::Admin => true,
-            UserRole::Coach => false,
+            // 修正前: false固定で担当資格でも操作不可だった（B-B-01の原因箇所）
+            // 修正後: assignedCoach()で担当資格かどうかを判定
+            UserRole::Coach => $this->assignedCoach($auth, $certification),
             default => false,
         };
     }
