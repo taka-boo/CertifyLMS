@@ -73,6 +73,7 @@ class SectionQuestionPolicyTest extends TestCase
         $coach = User::factory()->coach()->create();
         $admin = User::factory()->admin()->create();
         $assignedCert = Certification::factory()->published()->create();
+        $otherCert = Certification::factory()->published()->create();
         CertificationCoachAssignment::create([
             'id' => (string) Str::ulid(),
             'certification_id' => $assignedCert->id,
@@ -87,8 +88,17 @@ class SectionQuestionPolicyTest extends TestCase
                     ->create()->id,
             ]),
         ]);
+        // 追加: 担当外資格の質問は操作不可であることも検証する（他Policyテストとの統一）
+        $otherQuestion = SectionQuestion::factory()->published()->create([
+            'section_id' => Section::factory()->state(fn () => [
+                'chapter_id' => Chapter::factory()
+                    ->for(Part::factory()->for($otherCert))
+                    ->create()->id,
+            ]),
+        ]);
         $policy = new SectionQuestionPolicy;
 
         $this->assertTrue($policy->update($coach, $assignedQuestion));
+        $this->assertFalse($policy->update($coach, $otherQuestion), '非担当資格の質問は更新できないはず');
     }
 }
