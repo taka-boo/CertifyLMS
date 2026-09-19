@@ -13,6 +13,8 @@ import { initTextareaCounter } from './components/textarea-counter';
 import { initEnrollmentSwitchers } from './components/enrollment-switcher';
 import { initAiChatWidget } from './ai-chat/floating-widget';
 import { initLearningCalendar } from './dashboard/learning-calendar';
+// reorder.js 側で export された initReorder を、ここで読み込めるようにする（準備）
+import { initReorder } from './content-management/reorder';
 
 document.addEventListener('DOMContentLoaded', () => {
     initModals();
@@ -23,4 +25,6 @@ document.addEventListener('DOMContentLoaded', () => {
     initEnrollmentSwitchers();
     initAiChatWidget();
     initLearningCalendar();
+    // 実際に呼び出す（実行）。他の initXxx() と横並びに書くだけ
+    initReorder();
 });
