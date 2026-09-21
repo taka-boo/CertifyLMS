@@ -24,7 +24,7 @@
     </source>
     <coverage includeUncoveredFiles="true">
         <report>
-            <text outputFile="php://stdout" showUncoveredFiles="false" showOnlySummary="true"/>
+            <text outputFile="php://stdout" showUncoveredFiles="false" showOnlySummary="false"/>
         </report>
     </coverage>
     <php>

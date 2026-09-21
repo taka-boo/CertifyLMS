@@ -4,7 +4,7 @@ import { patchJson } from '../utils/fetch-json.js';
  * 簡易 reorder: HTML5 drag-and-drop で並び替え → PATCH エンドポイントへ {ids: [...]} を送る。
  * 受講生講師向けの軽量実装で、SortableJS 等の外部依存は使わない。
  */
-function initReorder(list) {
+function initReorderList(list) {
     const endpoint = list.dataset.reorderEndpoint;
     if (!endpoint) return;
 
@@ -50,4 +50,7 @@ async function submitOrder(list, endpoint) {
     }
 }
 
-document.querySelectorAll('[data-reorder-endpoint]').forEach(initReorder);
+// この export function initReorder が、app.js から import される対象になる
+export function initReorder() {
+    document.querySelectorAll('[data-reorder-endpoint]').forEach(initReorderList);
+}
