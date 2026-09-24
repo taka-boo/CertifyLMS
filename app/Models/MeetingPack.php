@@ -70,12 +70,21 @@ class MeetingPack extends Model
     }
 
     /**
+     * 表示順スコープ。公開中→下書き→アーカイブの優先順位で並べた上で、sort_order昇順、作成日時降順。
+     *
      * @param Builder<MeetingPack> $query
      *
      * @return Builder<MeetingPack>
      */
     public function scopeOrdered(Builder $query): Builder
     {
-        return $query->orderBy('sort_order')->orderByDesc('created_at');
+        return $query
+            ->orderByRaw('FIELD(status, ?, ?, ?)', [
+                MeetingPackStatus::Published->value,
+                MeetingPackStatus::Draft->value,
+                MeetingPackStatus::Archived->value,
+            ])
+            ->orderBy('sort_order')
+            ->orderByDesc('created_at');
     }
 }

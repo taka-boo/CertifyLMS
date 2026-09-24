@@ -49,6 +49,21 @@ class StoreRequestTest extends TestCase
         $response->assertSessionDoesntHaveErrors();
     }
 
+    public function test_validation_passes_with_large_sort_order(): void
+    {
+        // sort_order は上限を撤廃済み（PM フィードバック）。DB カラムの unsignedInteger 範囲内であれば通る。
+        $admin = User::factory()->admin()->create();
+
+        $response = $this->actingAs($admin)->postJson(route('admin.meeting-packs.store'), [
+            'name' => '大きい並び順パック',
+            'meeting_count' => 5,
+            'price' => 10000,
+            'sort_order' => 999999,
+        ]);
+
+        $response->assertStatus(302);
+    }
+
     /**
      * @param array<string, mixed> $overrides
      */
@@ -111,7 +126,6 @@ class StoreRequestTest extends TestCase
             'price が1000001' => [['price' => 1000001], 'price'],
             'stripe_price_id が256文字' => [['stripe_price_id' => str_repeat('a', 256)], 'stripe_price_id'],
             'sort_order が負数' => [['sort_order' => -1], 'sort_order'],
-            'sort_order が10000' => [['sort_order' => 10000], 'sort_order'],
         ];
     }
 }
