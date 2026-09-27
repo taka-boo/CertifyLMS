@@ -77,6 +77,18 @@ class BrowseControllerTest extends TestCase
         $response->assertForbidden();
     }
 
+    // 受講登録済み(learning)だが資格が公開停止(archived)の挙動確認。
+    public function test_show_enrollment_404_when_certification_archived(): void
+    {
+        $student = User::factory()->student()->inProgress()->create();
+        $certification = Certification::factory()->archived()->create();
+        $enrollment = Enrollment::factory()->for($student)->for($certification)->learning()->create();
+
+        $response = $this->actingAs($student)->get(route('learning.enrollments.show', $enrollment));
+
+        $response->assertNotFound();
+    }
+
     public function test_show_part_allows_passed_enrollment(): void
     {
         [$student, $certification] = $this->buildStudentAndCertification(EnrollmentStatus::Passed);
