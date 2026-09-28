@@ -25,7 +25,10 @@ final class IndexAction
     ): LengthAwarePaginator {
         $query = User::query();
 
-        $query->withTrashed();
+        // B-B-04：「退会済」フィルタが選ばれた時だけ soft delete 済みユーザーをクエリ対象に含める。無条件で withTrashed() すると、フィルタ未指定時に退会済みユーザーが混入するバグになるため。
+        if ($status === UserStatus::Withdrawn) {
+            $query->withTrashed();
+        }
 
         if ($keyword !== null && $keyword !== '') {
             $query->where(function ($q) use ($keyword) {
