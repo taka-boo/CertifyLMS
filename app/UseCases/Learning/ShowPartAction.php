@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Models\Part;
 use App\Models\User;
@@ -25,6 +26,11 @@ final class ShowPartAction
     public function __invoke(Part $part, User $student): array
     {
         $part->loadMissing('certification');
+
+        // B-B-03: 資格が公開停止(アーカイブ)または下書きの場合、教材は閲覧不可(404)とする。
+        if ($part->certification?->status !== CertificationStatus::Published) {
+            throw new NotFoundHttpException;
+        }
 
         if ($part->status !== ContentStatus::Published) {
             throw new NotFoundHttpException;

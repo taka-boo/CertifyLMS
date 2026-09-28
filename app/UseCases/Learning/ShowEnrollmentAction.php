@@ -4,6 +4,7 @@ declare(strict_types=1);
 
 namespace App\UseCases\Learning;
 
+use App\Enums\CertificationStatus;
 use App\Enums\ContentStatus;
 use App\Models\Chapter;
 use App\Models\Enrollment;
@@ -13,6 +14,7 @@ use App\Services\LearningHourTargetService;
 use App\Services\SectionQuestionScoreService;
 use App\Services\StreakService;
 use Illuminate\Support\Facades\DB;
+use Symfony\Component\HttpKernel\Exception\NotFoundHttpException;
 
 /**
  * /learning/enrollments/{enrollment} (2 階層目、教材 Part 一覧) のデータを準備する Action。
@@ -36,6 +38,12 @@ final class ShowEnrollmentAction
     public function __invoke(Enrollment $enrollment, string $tab = 'contents'): array
     {
         $enrollment->loadMissing(['certification', 'user', 'learningHourTarget']);
+
+        // B-B-03: 資格が公開停止(アーカイブ)または下書きの場合、教材一覧は閲覧不可(404)とする。
+        // 受講登録(Enrollment)自体は残っていても、親の資格が非公開なら中身は見せない。
+        if ($enrollment->certification?->status !== CertificationStatus::Published) {
+            throw new NotFoundHttpException;
+        }
 
         $parts = $enrollment->certification
             ?->parts()
