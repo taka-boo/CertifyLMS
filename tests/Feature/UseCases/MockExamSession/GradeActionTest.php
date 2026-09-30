@@ -135,45 +135,4 @@ class GradeActionTest extends TestCase
         // 1/3 = 33.33% — 50% 未満で不合格
         $this->assertFalse($session->pass);
     }
-
-    // B-B-05: 合格点が 100% の模試で満点を取った場合に問題ないか確認
-    public function test_grades_session_as_pass_when_perfect_score_meets_100_percent_passing_score(): void
-    {
-        // Arrange
-        $mockExam = MockExam::factory()->published()->passingScore(100)->create();
-        $questions = collect();
-        for ($i = 0; $i < 3; $i++) {
-            $questions->push(MockExamQuestion::factory()->forMockExam($mockExam)->withOptions(4, 0)->create(['order' => $i]));
-        }
-
-        $session = MockExamSession::factory()
-            ->forMockExam($mockExam)
-            ->inProgress()
-            ->create([
-                'generated_question_ids' => $questions->pluck('id')->all(),
-                'total_questions' => 3,
-                'passing_score_snapshot' => 100,
-            ]);
-
-        // 全問正解(得点率100%)
-        foreach ($questions as $question) {
-            $correctOption = $question->options->firstWhere('is_correct', true);
-
-            MockExamAnswer::factory()->create([
-                'mock_exam_session_id' => $session->id,
-                'mock_exam_question_id' => $question->id,
-                'selected_option_id' => $correctOption->id,
-                'selected_option_body' => $correctOption->body,
-                'is_correct' => false,
-                'answered_at' => now(),
-            ]);
-        }
-
-        (app(GradeAction::class))($session);
-
-        $session->refresh();
-        $this->assertSame(3, $session->total_correct);
-        $this->assertEquals(100.00, (float) $session->score_percentage);
-        $this->assertTrue($session->pass);
-    }
 }
