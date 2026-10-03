@@ -33,7 +33,8 @@ final class OnboardAction
     public function __construct(
         private readonly UserStatusChangeService $statusChanger,
         private readonly GrantInitialQuotaAction $grantInitial,
-    ) {}
+    ) {
+    }
 
     /**
      * @param array{name: string, bio?: ?string, password: string, meeting_url?: string} $validated
@@ -69,6 +70,8 @@ final class OnboardAction
                 'password' => Hash::make($validated['password']),
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
+                // B-B-06：オンボーディング完了で invited → in_progress に遷移させる(更新しないと招待中のままになり、招待URLを再利用できてしまうため)
+                'status' => UserStatus::InProgress,
             ];
 
             // 受講生のみ Plan 期間を確定。コーチは受講期間という業務概念を持たない。
@@ -90,6 +93,12 @@ final class OnboardAction
             );
 
             $user->forceFill($attrs)->save();
+
+            // B-B-06：招待を使用済み(accepted)にして、同じ招待URLの再利用を防ぐ。以後は verify() と本Action冒頭の確認(status が pending であること)で弾かれ、410になる。
+            $invitation->update([
+                'status' => InvitationStatus::Accepted,
+                'accepted_at' => $now,
+            ]);
 
             // 面談クォータは受講生固有の消費対象。コーチは面談を提供する側のため初期付与しない。
             if ($user->role === UserRole::Student && $user->plan->default_meeting_quota > 0) {

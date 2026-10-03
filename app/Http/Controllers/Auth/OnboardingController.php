@@ -18,8 +18,9 @@ class OnboardingController extends Controller
 {
     public function show(Request $request, Invitation $invitation, InvitationTokenService $tokenService): View
     {
-        if (! $tokenService->verify($request, $invitation)) {
-            return view('auth.invitation-invalid');
+        if (!$tokenService->verify($request, $invitation)) {
+            // B-B-06: 無効な招待は、チケットの期待どおり 410(Gone)で返す。
+            return response()->view('auth.invitation-invalid', [], 410);
         }
 
         $postUrl = URL::temporarySignedRoute(
