@@ -70,8 +70,6 @@ final class OnboardAction
                 'password' => Hash::make($validated['password']),
                 'profile_setup_completed' => true,
                 'email_verified_at' => $now,
-                // B-B-06：オンボーディング完了で invited → in_progress に遷移させる(更新しないと招待中のままになり、招待URLを再利用できてしまうため)
-                'status' => UserStatus::InProgress,
             ];
 
             // 受講生のみ Plan 期間を確定。コーチは受講期間という業務概念を持たない。

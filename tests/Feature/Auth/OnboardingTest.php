@@ -87,7 +87,7 @@ class OnboardingTest extends TestCase
 
         $response = $this->get($tampered);
 
-        $response->assertOk(410); // 無効な招待は、200ではなく410(Gone)で拒否する(B-B-06)
+        $response->assertStatus(410); // 無効な招待は、200ではなく410(Gone)で拒否する(B-B-06)
         $response->assertViewIs('auth.invitation-invalid');
     }
 
@@ -110,7 +110,7 @@ class OnboardingTest extends TestCase
 
         $response = $this->get($url);
 
-        $response->assertOk(410); // 期限切れの招待は、200ではなく410(Gone)で拒否する(B-B-06)
+        $response->assertStatus(410); // 期限切れの招待は、200ではなく410(Gone)で拒否する(B-B-06)
         $response->assertViewIs('auth.invitation-invalid');
     }
 
