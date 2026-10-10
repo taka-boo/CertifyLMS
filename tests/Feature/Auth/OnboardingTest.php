@@ -87,7 +87,7 @@ class OnboardingTest extends TestCase
 
         $response = $this->get($tampered);
 
-        $response->assertOk();
+        $response->assertStatus(410); // 無効な招待は、200ではなく410(Gone)で拒否する(B-B-06)
         $response->assertViewIs('auth.invitation-invalid');
     }
 
@@ -110,7 +110,7 @@ class OnboardingTest extends TestCase
 
         $response = $this->get($url);
 
-        $response->assertOk();
+        $response->assertStatus(410); // 期限切れの招待は、200ではなく410(Gone)で拒否する(B-B-06)
         $response->assertViewIs('auth.invitation-invalid');
     }
 
@@ -204,6 +204,55 @@ class OnboardingTest extends TestCase
             'id' => $invitation->id,
             'status' => InvitationStatus::Accepted->value,
         ]);
+    }
+
+    /**
+     * 完了後に同じ招待URLを開き直す(GET)と、使用済みとして410で拒否されること(B-B-06)。
+     */
+    public function test_show_returns_410_when_invitation_url_is_reused_after_onboarding(): void
+    {
+        $invitation = $this->freshInvitation();
+        $showUrl = $this->signedShowUrl($invitation); // 招待メールに載るURLと同じもの
+
+        // 1回目: オンボーディングを完了する
+        $this->post($this->postUrl($invitation), [
+            'name' => '受講太郎',
+            'password' => 'secret-pass',
+            'password_confirmation' => 'secret-pass',
+        ])->assertRedirect(route('dashboard.index'));
+
+        // 2回目: 同じ招待URLを開くと、フォームではなく無効画面が410で返る
+        $response = $this->get($showUrl);
+
+        $response->assertStatus(410);
+        $response->assertViewIs('auth.invitation-invalid');
+    }
+
+    /**
+     * 完了後に同じ招待URLで再送信(POST)しても、410で拒否され、登録内容を上書きできないこと(B-B-06)。
+     */
+    public function test_store_returns_410_and_keeps_profile_when_invitation_url_is_reused(): void
+    {
+        $invitation = $this->freshInvitation();
+        $postUrl = $this->postUrl($invitation);
+
+        // 1回目: オンボーディングを完了する
+        $this->post($postUrl, [
+            'name' => '受講太郎',
+            'password' => 'secret-pass',
+            'password_confirmation' => 'secret-pass',
+        ])->assertRedirect(route('dashboard.index'));
+
+        // 2回目: 同じURLで別の名前・パスワードを送る
+        $response = $this->post($postUrl, [
+            'name' => '上書き太郎',
+            'password' => 'other-pass-123',
+            'password_confirmation' => 'other-pass-123',
+        ]);
+
+        // 410で拒否され、1回目の登録内容がそのまま残る
+        $response->assertStatus(410);
+        $this->assertSame('受講太郎', $invitation->user->fresh()->name);
     }
 
     public function test_store_does_not_create_new_user_row(): void

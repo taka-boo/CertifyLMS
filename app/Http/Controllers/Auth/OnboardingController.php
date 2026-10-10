@@ -11,15 +11,19 @@ use App\Services\InvitationTokenService;
 use App\UseCases\Auth\OnboardAction;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+// ▼ 追加: Response を使えるようにする
+use Illuminate\Http\Response;
 use Illuminate\Support\Facades\URL;
 use Illuminate\View\View;
 
 class OnboardingController extends Controller
 {
-    public function show(Request $request, Invitation $invitation, InvitationTokenService $tokenService): View
+    // B-B-06: 無効な招待は Response(410)、有効な招待は View を返すため、戻り値の型を両方にする
+    public function show(Request $request, Invitation $invitation, InvitationTokenService $tokenService): View|Response
     {
-        if (! $tokenService->verify($request, $invitation)) {
-            return view('auth.invitation-invalid');
+        if (!$tokenService->verify($request, $invitation)) {
+            // B-B-06: 無効な招待は、チケットの期待どおり 410(Gone)で返す。
+            return response()->view('auth.invitation-invalid', [], 410);
         }
 
         $postUrl = URL::temporarySignedRoute(
