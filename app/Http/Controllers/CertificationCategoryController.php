@@ -52,7 +52,9 @@ class CertificationCategoryController extends Controller
 
         $action($category);
 
+        // 削除成功時も store / update と同様に success 表示させる(表示は layouts/app の <x-flash /> で実行)
         return redirect()
-            ->route('admin.certification-categories.index');
+            ->route('admin.certification-categories.index')
+            ->with('success', '分類を削除しました。');
     }
 }

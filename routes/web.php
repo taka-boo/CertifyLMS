@@ -169,6 +169,7 @@ Route::middleware(['auth', 'role:admin'])->prefix('admin')->group(function () {
     // 資格マスタ管理(資格本体の CRUD + 状態遷移、admin のみ)
     Route::resource('certifications', CertificationController::class)
         ->except(['index', 'show'])
+
         ->parameters(['certifications' => 'certification'])
         ->names('admin.certifications');
     Route::post('certifications/{certification}/publish', [CertificationController::class, 'publish'])
