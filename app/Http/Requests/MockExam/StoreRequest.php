@@ -18,7 +18,7 @@ class StoreRequest extends FormRequest
     public function authorize(): bool
     {
         $certificationId = $this->input('certification_id');
-        if (! is_string($certificationId)) {
+        if (!is_string($certificationId)) {
             return false;
         }
 
@@ -40,7 +40,7 @@ class StoreRequest extends FormRequest
             'title' => ['required', 'string', 'max:100'],
             'description' => ['nullable', 'string', 'max:2000'],
             'order' => ['required', 'integer', 'min:0', 'max:65535'],
-            'passing_score' => ['required', 'integer', 'min:1'],
+            'passing_score' => ['required', 'integer', 'min:1', 'max:100'], // 合格点は得点率(0〜100%)と比較する値のため、上限を100%に制限する(B-B-05)
         ];
     }
 

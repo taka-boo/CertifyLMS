@@ -45,6 +45,31 @@ class StoreRequestTest extends TestCase
         ]);
     }
 
+    // passing_score の上限ちょうど(100)は許可されるべき(B-B-05)
+    public function test_validation_passes_with_boundary_passing_score_100(): void
+    {
+        // Arrange
+        $admin = User::factory()->admin()->create();
+        $cert = Certification::factory()->published()->create();
+
+        // Act
+        $response = $this->actingAs($admin)->post(route('admin.mock-exams.store'), [
+            'certification_id' => $cert->id,
+            'title' => '基本情報技術者試験 模試 第1回',
+            'description' => '午前科目を中心とした標準難易度の模試',
+            'order' => 1,
+            'passing_score' => 100,
+        ]);
+
+        // Assert
+        $response->assertSessionDoesntHaveErrors();
+        $response->assertStatus(302);
+        $this->assertDatabaseHas('mock_exams', [
+            'certification_id' => $cert->id,
+            'passing_score' => 100,
+        ]);
+    }
+
     #[DataProvider('invalidFieldPayloads')]
     public function test_validation_fails(string $invalidField, mixed $invalidValue): void
     {

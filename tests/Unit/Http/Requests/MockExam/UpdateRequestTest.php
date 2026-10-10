@@ -30,6 +30,19 @@ class UpdateRequestTest extends TestCase
         $this->assertTrue($validator->passes(), $validator->errors()->toJson());
     }
 
+    // passing_score の上限ちょうど(100)は許可されるべき(B-B-05)
+    public function test_passes_with_boundary_passing_score_100(): void
+    {
+        // Arrange
+        $payload = ['title' => '基本情報模試 第2回', 'description' => '解説付き', 'order' => 1, 'passing_score' => 100];
+
+        // Act
+        $validator = Validator::make($payload, (new UpdateRequest)->rules());
+
+        // Assert
+        $this->assertTrue($validator->passes(), $validator->errors()->toJson());
+    }
+
     #[DataProvider('invalidCases')]
     public function test_fails_for_invalid_field(string $field, mixed $value): void
     {
